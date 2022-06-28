@@ -89,7 +89,7 @@ void asarArchive::packFiles( std::string sPath, std::string &sFiles, std::vector
 */
 }
 
-void asarArchive::unpackFiles( rapidjson::Value& object, std::string sPath ) {
+void asarArchive::unpackFiles( rapidjson::Value& object, const std::string &sPath ) {
 	if ( !object.IsObject() ) // how ?
 		return;
 
@@ -134,7 +134,7 @@ void asarArchive::unpackFiles( rapidjson::Value& object, std::string sPath ) {
 }
 
 // Unpack archive to a specific location
-bool asarArchive::unpack( std::string sArchivePath, std::string sExtractPath ) {
+bool asarArchive::unpack( const std::string &sArchivePath, std::string sExtractPath ) {
 	m_ifsInputFile.open( sArchivePath, std::ios::binary );
 	if ( !m_ifsInputFile ) {
 		perror("");
@@ -188,7 +188,7 @@ bool asarArchive::pack( std::string sPath, std::string sFinalName ) {
 }
 
 // List archive content
-bool asarArchive::list( std::string sArchivePath ) {
+bool asarArchive::list( const std::string &sArchivePath ) {
 	extract = false;
 	std::cout << sArchivePath << ":" << std::endl;
 	bool ret = unpack( sArchivePath );
