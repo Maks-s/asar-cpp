@@ -7,7 +7,7 @@ Just drag and drop the archive on the executable or use the command line
 
 ### Command line
 ```bash
-$ asar --unpack [-o out] archive...
+$ asar unpack [-o out] archive...
 ```
 
 ## Dependencies

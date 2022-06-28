@@ -12,17 +12,20 @@
 
 #include <direct.h>
 #define MKDIR(a) mkdir(a)
-const char DIR_SEPARATOR = '\\';
+#define DIR_SEPARATOR '\\'
 
 #else
 
 #include <sys/stat.h>
 #define MKDIR(a) mkdir(a,0777)
-const char DIR_SEPARATOR = '/';
+#define DIR_SEPARATOR '/'
 
 #endif // _WIN32
 
+#ifndef uint
 typedef unsigned int uint;
+#endif
+
 
 // Return number of files in a folder
 uint asarArchive::numSubfile( DIR* dir ) {
@@ -92,16 +95,26 @@ void asarArchive::unpackFiles( rapidjson::Value& object, std::string sPath ) {
 	if ( !object.IsObject() ) // how ?
 		return;
 
+	if ( extract && sPath != "" )
+		MKDIR( sPath.c_str() );
+
 	for ( auto itr = object.MemberBegin(); itr != object.MemberEnd(); ++itr ) {
 		std::string sFilePath = sPath + itr->name.GetString();
 		rapidjson::Value& vMember = itr->value;
 		if ( vMember.IsObject() ) {
 			if ( vMember.HasMember("files") ) {
-				MKDIR( sFilePath.c_str() );
+				if ( extract )
+					MKDIR( sFilePath.c_str() );
+
 				unpackFiles( vMember["files"], sFilePath + DIR_SEPARATOR );
 			} else {
 				if ( !( vMember.HasMember("size") && vMember.HasMember("offset") && vMember["size"].IsInt() && vMember["offset"].IsString() ) )
 					continue;
+
+				if ( !extract ) {
+					std::cout << '\t' << sFilePath << std::endl;
+					continue;
+				}
 
 				uint uSize = vMember["size"].GetUint();
 				uint uOffset = std::stoi( vMember["offset"].GetString() );
@@ -174,4 +187,11 @@ bool asarArchive::pack( std::string sPath, std::string sFinalName ) {
 	ofsOutputFile.close();
 
 	return true;
+}
+
+// List archive content
+bool asarArchive::list( std::string sArchivePath ) {
+	extract = false;
+	std::cout << sArchivePath << ":" << std::endl;
+	return unpack( sArchivePath );
 }
