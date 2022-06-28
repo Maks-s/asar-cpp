@@ -1,11 +1,11 @@
 #include <iostream>
 #include <string>
 #include <fstream>
-#include <vector>
 #include <rapidjson/document.h>
 #include <rapidjson/error/en.h>
 #include <dirent.h>
 #include <errno.h>
+#include <inttypes.h>
 #include "asar.h"
 
 #ifdef _WIN32
@@ -22,15 +22,14 @@
 
 #endif // _WIN32
 
-typedef unsigned int uint;
 
 
 // Return number of files in a folder
-uint asarArchive::numSubfile( DIR* dir ) {
-	uint uFiles = 0;
+size_t asarArchive::numSubfile( DIR* dir ) {
+	size_t uFiles = 0;
 	struct dirent* file;
 
-	long int iDirPos = telldir(dir);
+	long iDirPos = telldir(dir);
 	rewinddir(dir);
 
 	while ( (file = readdir(dir)) )
@@ -42,14 +41,15 @@ uint asarArchive::numSubfile( DIR* dir ) {
 
 // Pack files, not working at the moment
 void asarArchive::packFiles( std::string sPath, std::string &sFiles, std::vector<char> &vBinFile ) {
+/*
 	DIR* dir = opendir( sPath.c_str() );
 
 	if ( !dir )
 		return;
 
 	struct dirent* file;
-	uint uFolderSize = numSubfile( dir );
-	uint uFileNum = 0;
+	size_t uFolderSize = numSubfile( dir );
+	size_t uFileNum = 0;
 
 	while ( (file = readdir(dir)) ) {
 		if ( !strcmp(file->d_name, ".") || !strcmp(file->d_name, "..") )
@@ -86,7 +86,7 @@ void asarArchive::packFiles( std::string sPath, std::string &sFiles, std::vector
 	}
 
 	closedir(dir);
-	return;
+*/
 }
 
 void asarArchive::unpackFiles( rapidjson::Value& object, std::string sPath ) {
@@ -114,8 +114,8 @@ void asarArchive::unpackFiles( rapidjson::Value& object, std::string sPath ) {
 					continue;
 				}
 
-				uint uSize = vMember["size"].GetUint();
-				uint uOffset = std::stoi( vMember["offset"].GetString() );
+				size_t uSize = vMember["size"].GetUint();
+				int uOffset = std::stoi( vMember["offset"].GetString() );
 
 				char fileBuf[uSize];
 				m_ifsInputFile.seekg(m_headerSize + uOffset);
@@ -141,16 +141,15 @@ bool asarArchive::unpack( std::string sArchivePath, std::string sExtractPath ) {
 		return false;
 	}
 
-	char * sizeBuf = new char[8];
+	char sizeBuf[8];
 	m_ifsInputFile.read( sizeBuf, 8 );
-	uint uSize = *(uint*)(sizeBuf + 4) - 8;
-
-	delete[] sizeBuf;
+	uint32_t uSize = *(uint32_t*)(sizeBuf + 4) - 8;
 
 	m_headerSize = uSize + 16;
-	char headerBuf[uSize + 1] = {0};
+	char headerBuf[uSize + 1];
 	m_ifsInputFile.seekg(16); // skip header
 	m_ifsInputFile.read(headerBuf, uSize);
+	headerBuf[uSize] = 0; // append nul byte to end
 
 	rapidjson::Document json;
 	rapidjson::ParseResult res = json.Parse( headerBuf );
@@ -172,6 +171,7 @@ bool asarArchive::unpack( std::string sArchivePath, std::string sExtractPath ) {
 
 // Pack archive, not working at the moment
 bool asarArchive::pack( std::string sPath, std::string sFinalName ) {
+/*
 	std::string sFiles = "{\"files\":{";
 	std::vector<char> vBinFile;
 
@@ -183,7 +183,7 @@ bool asarArchive::pack( std::string sPath, std::string sFinalName ) {
 	ofsOutputFile.write( sFiles.c_str(), sFiles.length() );
 	ofsOutputFile.write( &vBinFile[0], vBinFile.size() );
 	ofsOutputFile.close();
-
+*/
 	return true;
 }
 
