@@ -22,9 +22,7 @@
 
 #endif // _WIN32
 
-#ifndef uint
 typedef unsigned int uint;
-#endif
 
 
 // Return number of files in a folder
@@ -95,7 +93,7 @@ void asarArchive::unpackFiles( rapidjson::Value& object, std::string sPath ) {
 	if ( !object.IsObject() ) // how ?
 		return;
 
-	if ( extract && sPath != "" )
+	if ( extract && !sPath.empty() )
 		MKDIR( sPath.c_str() );
 
 	for ( auto itr = object.MemberBegin(); itr != object.MemberEnd(); ++itr ) {
@@ -119,16 +117,16 @@ void asarArchive::unpackFiles( rapidjson::Value& object, std::string sPath ) {
 				uint uSize = vMember["size"].GetUint();
 				uint uOffset = std::stoi( vMember["offset"].GetString() );
 
-				std::vector<char>fileBuf ( uSize );
+				char fileBuf[uSize];
 				m_ifsInputFile.seekg(m_headerSize + uOffset);
-				m_ifsInputFile.read(fileBuf.data(), uSize);
+				m_ifsInputFile.read(fileBuf, uSize);
 				std::ofstream ofsOutputFile( sFilePath, std::ios::trunc | std::ios::binary );
 
 				if ( !ofsOutputFile ) {
 					std::cerr << "Error when writing to file " << sFilePath << std::endl;
 					continue;
 				}
-				ofsOutputFile.write( (char*)&fileBuf[0], uSize );
+				ofsOutputFile.write( fileBuf, uSize );
 				ofsOutputFile.close();
 			}
 		}
@@ -150,18 +148,18 @@ bool asarArchive::unpack( std::string sArchivePath, std::string sExtractPath ) {
 	delete[] sizeBuf;
 
 	m_headerSize = uSize + 16;
-	std::vector<char> headerBuf (uSize);
+	char headerBuf[uSize + 1] = {0};
 	m_ifsInputFile.seekg(16); // skip header
-	m_ifsInputFile.read(headerBuf.data(), uSize);
+	m_ifsInputFile.read(headerBuf, uSize);
 
 	rapidjson::Document json;
-	rapidjson::ParseResult res = json.Parse( (char*)&headerBuf[0] );
+	rapidjson::ParseResult res = json.Parse( headerBuf );
 	if ( !res ) {
 		std::cout << rapidjson::GetParseError_En(res.Code()) << std::endl;
-		return 2;
+		return false;
 	}
 
-	if ( sExtractPath != "" && sExtractPath.back() != DIR_SEPARATOR )
+	if ( !sExtractPath.empty() && sExtractPath.back() != DIR_SEPARATOR )
 		sExtractPath.push_back(DIR_SEPARATOR);
 
 	unpackFiles( json["files"], sExtractPath );
@@ -193,5 +191,8 @@ bool asarArchive::pack( std::string sPath, std::string sFinalName ) {
 bool asarArchive::list( std::string sArchivePath ) {
 	extract = false;
 	std::cout << sArchivePath << ":" << std::endl;
-	return unpack( sArchivePath );
+	bool ret = unpack( sArchivePath );
+	extract = true;
+
+	return ret;
 }
