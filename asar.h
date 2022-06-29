@@ -14,7 +14,7 @@ private:
 	std::ifstream m_ifsInputFile;
 	size_t m_headerSize = 0;
 	size_t m_szOffset = 0;
-	bool extract = true;
+	bool m_extract = true;
 	void unpackFiles( rapidjson::Value& object, const std::string &sPath );
 	void packFiles( std::string sPath, std::string &sFiles, std::vector<char> &vBinFile );
 	size_t numSubfile( DIR* dir );

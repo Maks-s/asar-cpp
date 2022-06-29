@@ -93,7 +93,7 @@ void asarArchive::unpackFiles( rapidjson::Value& object, const std::string &sPat
 	if ( !object.IsObject() ) // how ?
 		return;
 
-	if ( extract && !sPath.empty() )
+	if ( m_extract && !sPath.empty() )
 		MKDIR( sPath.c_str() );
 
 	for ( auto itr = object.MemberBegin(); itr != object.MemberEnd(); ++itr ) {
@@ -101,7 +101,7 @@ void asarArchive::unpackFiles( rapidjson::Value& object, const std::string &sPat
 		rapidjson::Value& vMember = itr->value;
 		if ( vMember.IsObject() ) {
 			if ( vMember.HasMember("files") ) {
-				if ( extract )
+				if ( m_extract )
 					MKDIR( sFilePath.c_str() );
 
 				unpackFiles( vMember["files"], sFilePath + DIR_SEPARATOR );
@@ -109,7 +109,7 @@ void asarArchive::unpackFiles( rapidjson::Value& object, const std::string &sPat
 				if ( !( vMember.HasMember("size") && vMember.HasMember("offset") && vMember["size"].IsInt() && vMember["offset"].IsString() ) )
 					continue;
 
-				if ( !extract ) {
+				if ( !m_extract ) {
 					std::cout << '\t' << sFilePath << std::endl;
 					continue;
 				}
@@ -189,10 +189,10 @@ bool asarArchive::pack( std::string sPath, std::string sFinalName ) {
 
 // List archive content
 bool asarArchive::list( const std::string &sArchivePath ) {
-	extract = false;
+	m_extract = false;
 	std::cout << sArchivePath << ":" << std::endl;
 	bool ret = unpack( sArchivePath );
-	extract = true;
+	m_extract = true;
 
 	return ret;
 }
